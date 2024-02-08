@@ -101,3 +101,22 @@ h5.header {
     padding: .25rem;
     text-align: left;
 }
+
+input[type=text] {
+    background-color: transparent;
+    border-bottom: 1px solid white;
+}
+
+button::before {
+    content: '[';
+    padding-right: .3rem;
+}
+
+button::after {
+    content: ']';
+    padding-left: .3rem;
+}
+
+button:hover {
+    color: var(--si-highlight-green);
+}
