@@ -11,8 +11,10 @@
     // be sure to separate the reactive state of typed messages from what is sent across the wire
     const new_message: Ref = ref<string>('')
     function send() {
-        props.sendMessage(unref(props.username), new_message.value)
-        new_message.value = ''  // so we can blank out the input after send while message is in flight
+        if (new_message.value) {
+            props.sendMessage(unref(props.username), new_message.value)
+            new_message.value = ''  // so we can blank out the input after send while message is in flight
+        }  // no need to error on blank string here
     }
 </script>
 
