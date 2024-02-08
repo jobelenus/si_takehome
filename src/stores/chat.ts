@@ -4,6 +4,7 @@ import type { Reactive } from 'vue'
 import type { User, Message, SendMessage, PendingMessage } from '@/stores/interfaces'
 import { Observable } from 'rxjs';
 import type { Subscriber } from 'rxjs';
+import ReconnectingWebSocket from 'reconnecting-websocket';
 
 
 // we need types for the websocket
@@ -34,7 +35,36 @@ export const useChatStore = defineStore('chat', () => {
         users.push(...raw_users.users.map((u: string): User => { return {'name': u} }))
 
         const ws_listener: Observable<WSPayload> = new Observable((subscriber: Subscriber): void => {
-            // websocket goes here
+            const rws = new ReconnectingWebSocket(import.meta.env.VITE_CHAT_WS+'/ws');  // had to look at the rust code to find that `ws` endpoint
+            rws.addEventListener('open', () => {
+                console.log('WS up')
+            });
+            rws.addEventListener('message', (payload: WSPayload) => {
+                console.log('WS payload', payload)
+            });
+        })
+
+        ws_listener.subscribe({
+            next(data: WSPayload) {
+                const user: User = {name: data.user}
+                if (data.kind == KIND.SIGNIN) {
+                    users.push(user)
+                } else if (data.kind == KIND.MSG) {
+                    // not entirely happy with this typing check *thinking*
+                    if ((!('index' in data) || data.index == undefined) || !data.message) {
+                        throw new Error('Payload expected to have index and message')
+                    }
+                    // remove incoming message from pending messages, and add the message to the chat
+                    // should happen within one render/paint so a user shouldn't see duplicate messages
+                    const msg: Message = {user: user, index: data.index, message: data.message}
+                    pending_messages.forEach((value: PendingMessage, index:number, array:Reactive<Array<PendingMessage>>) => {
+                        if (value.user.name == msg.user.name && value.message == msg.message) {
+                            array.splice(index, 1)
+                        }
+                    })
+                    messages.push(msg)
+                }
+            }
         })
     }
 
