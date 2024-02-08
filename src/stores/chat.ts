@@ -24,15 +24,38 @@ interface UserList {
     users: Array<string>
 }
 
+interface APIMessage {
+    index: number
+    user: string
+    message: string
+}
+interface MessageList {
+    messages: Array<APIMessage>
+}
+
 export const useChatStore = defineStore('chat', () => {
     const users: Reactive<Array<User>> = reactive([])
     const messages: Reactive<Array<Message>> = reactive([])
     const pending_messages: Reactive<Array<PendingMessage>> = reactive([])
 
-    async function load(): Promise<void> {
+    async function load_users() {
         const resp = await fetch(import.meta.env.VITE_CHAT_API+'/users')
         const raw_users: UserList = await resp.json()
         users.push(...raw_users.users.map((u: string): User => { return {'name': u} }))
+    }
+
+    async function load_messages() {
+        const resp = await fetch(import.meta.env.VITE_CHAT_API+'/messages')
+        const raw_msgs: MessageList = await resp.json()
+        messages.push(...raw_msgs.messages.map((raw_msg: APIMessage): Message => {
+            const user: User = {'name': raw_msg.user}
+            return {user: user, index: raw_msg.index, message: raw_msg.message}
+        }))
+    }
+
+    async function load(): Promise<void> {
+        load_users()
+        load_messages()
 
         const ws_listener: Observable = new Observable((subscriber: Subscriber): void => {
             const rws = new ReconnectingWebSocket(import.meta.env.VITE_CHAT_WS+'/ws');  // had to look at the rust code to find that `ws` endpoint
