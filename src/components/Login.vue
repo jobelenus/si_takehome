@@ -24,7 +24,6 @@ async function setUser(): void {
         })
         if (resp.ok) {
             const resp_content = await resp.json()
-            console.log('RESP', resp_content)
             userStore.set_username(username.value)
             router.push('/chat')
         } else {

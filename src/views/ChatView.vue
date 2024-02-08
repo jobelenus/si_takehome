@@ -6,7 +6,7 @@
     import UserList from '../components/UserList.vue'
     import Messages from '../components/Messages.vue'
 
-    // chatStore.load()
+    chatStore.load()
 </script>
 
 <template>

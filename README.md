@@ -19,3 +19,4 @@ npx cypress open
 ### Improvements
 
 - Find the appropriate place (e.g. hook, middleware, whatever they call it) in Vue to wrap all fetch POSTs with Accept header
+- Also find the appropriate place for more global fetch error handling, rather than at each specific spot. Confirm with designer how they'd like to handle errors (e.g. toasts? or tied to specific form elements?)

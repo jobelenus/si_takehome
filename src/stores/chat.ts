@@ -2,6 +2,8 @@ import { defineStore } from 'pinia'
 import { reactive } from 'vue'
 import type { Reactive } from 'vue'
 import type { User, Message, SendMessage, PendingMessage } from '@/stores/interfaces'
+import { Observable } from 'rxjs';
+import type { Subscriber } from 'rxjs';
 
 
 // we need types for the websocket
@@ -17,13 +19,23 @@ interface WSPayload {
     message?: string
 }
 
+interface UserList {
+    users: Array<string>
+}
+
 export const useChatStore = defineStore('chat', () => {
     const users: Reactive<Array<User>> = reactive([])
     const messages: Reactive<Array<Message>> = reactive([])
     const pending_messages: Reactive<Array<PendingMessage>> = reactive([])
 
-    function load():void {
-        // init websockets and fetch state
+    async function load(): Promise<void> {
+        const resp = await fetch(import.meta.env.VITE_CHAT_API+'/users')
+        const raw_users: UserList = await resp.json()
+        users.push(...raw_users.users.map((u: string): User => { return {'name': u} }))
+
+        const ws_listener: Observable<WSPayload> = new Observable((subscriber: Subscriber): void => {
+            // websocket goes here
+        })
     }
 
     function send_message(...[username, msg]: Parameters<SendMessage>): ReturnType<SendMessage> {
