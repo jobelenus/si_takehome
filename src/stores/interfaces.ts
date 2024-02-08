@@ -12,4 +12,4 @@ export interface PendingMessage {
     user: User
     message: string
 }
-export type SendMessage = (username: string, msg: string) => void 
+export type SendMessage = (username: string, msg: string) => Promise<void>

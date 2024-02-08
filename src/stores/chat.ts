@@ -38,11 +38,23 @@ export const useChatStore = defineStore('chat', () => {
         })
     }
 
-    function send_message(...[username, msg]: Parameters<SendMessage>): ReturnType<SendMessage> {
+    async function send_message(...[username, msg]: Parameters<SendMessage>): ReturnType<SendMessage> {
         const user: User = {name: username}
         const message: PendingMessage = {user: user, message: msg}
         pending_messages.push(message)
-        // fetch POST
+
+        const resp = await fetch(import.meta.env.VITE_CHAT_API+'/messages', {
+            method: 'POST',
+            body: JSON.stringify({'user': username, 'message': msg}),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        console.log('POST MSG')
+        if (!resp.ok) {
+            alert('Error sending message!')  // TODO error handling
+        }
+
     }
 
     return {users, messages, load, send_message, pending_messages }
