@@ -26,3 +26,14 @@ npx cypress open
 — The scrollToLatest feels like an old solution I would have used years ago... so it was the first thing I reached for. I don't know if there is a more modern/recent solution? Or even if something besides flexbox and overflow-y is the answer for this display?
 - With *really large* chat history you would not want to load it all, you'd want paging on the backend based on the index number (e.g. /messages?index=<oldest-loaded-index>&history=<int-for-number-messages>)... I imagine implementing something like slack's "-----NEW-----" divider line. You could store the most recent index in local storage, and scroll to that. And then add a scroll handler to update the most recent index...
 - Right now the user list is "every user who ever logged in". We don't have an indication of who is online. I presumed the asterisk was to identify who *you* are in the list. I would implement a keep alive on the front end that lets the WS know a user is still connected. And when the socket unloads send a SIGNOUT payload. The backend would need a new endpoint as well to return "online" users... or modify the current user endpoint to include that info.
+
+### Conclusion
+Vue has changed a lot since I last used it professionally. I really like the Composition API, it feels a lot better than the old exporting way. And Pinia is much better than VueX. It really does feel like Vue is moving *towards* Svelte in a number of ways.
+
+I stopped a little after the 3hr mark. And I think the largest surface area that need improvement is the error handling. It needs some direction from UX/Design partners for the best experience on how to deliver errors.
+
+As for the code that would make it easier to handle I would approach it by creating some more generic input & form components. I've done this in the past in many frameworks, and have some old svelte examples like this:
+https://github.com/jobelenus/sapper_components/blob/master/src/routes/form.svelte
+https://github.com/jobelenus/sapper_components/blob/master/src/components/form/Input.svelte
+
+That way the logic is centralized and doesn't need to be repeated. But maybe the Vue community already has a widely popular package to do that, and I'm in the dark. It wouldn't be the first time :) 
