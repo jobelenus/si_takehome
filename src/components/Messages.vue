@@ -18,6 +18,7 @@
     }
 
     const chatlist = ref(null)
+    const msg_input = ref(null)
 
     function scrollToLatest() {
         chatlist.value.scrollTop = chatlist.value.scrollHeight
@@ -28,6 +29,7 @@
     })
     onMounted(() => {
         scrollToLatest()
+        msg_input.value.focus()
     })
 </script>
 
@@ -51,7 +53,7 @@
             </div>
             <div class="flex-none p-5 border-x-0">
                 <div class="flex">
-                    <input type="text" class="flex-1 mx-1" v-model='new_message' @keyup.enter="send" />
+                    <input type="text" class="flex-1 mx-1" v-model='new_message' @keyup.enter="send" ref="msg_input" />
                     <button class="flex-none mx-1" @click="send">Send</button>
                 </div>
             </div>
