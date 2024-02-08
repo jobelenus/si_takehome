@@ -12,9 +12,10 @@ if (userStore.stored_username) {
     username.value = userStore.stored_username
 }
 
+console.log('API', import.meta.env.VITE_CHAT_API)
+
 function setUser(): void {
     if (username.value) {
-        // send to the back end
         userStore.set_username(username.value)
         router.push('/chat')
     } else {
