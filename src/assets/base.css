@@ -80,3 +80,24 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+
+.bg-si-green {
+    background-color: var(--si-green);
+}
+
+.bordered-si {
+    border: 1px solid var(--si-bright-green);
+}
+
+fieldset {
+    margin: 0;
+    border: 1px solid var(--si-bright-green);
+}
+
+h5.header {
+    background: black;
+    margin: 0;
+    padding: .25rem;
+    text-align: left;
+}
