@@ -6,3 +6,10 @@ export interface Message {
     index: number
     message: string
 }
+// this represents a message that was sent, but not yet confirmed by the backend
+// thats why it has no index
+export interface PendingMessage {
+    user: User
+    message: string
+}
+export type SendMessage = (username: string, msg: string) => void 
