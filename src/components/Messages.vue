@@ -1,5 +1,5 @@
 <script setup lang="ts">
-    import { ref, unref } from 'vue'
+    import { ref, unref, onUpdated, onMounted } from 'vue'
     import type { Message, PendingMessage, SendMessage  } from '@/stores/interfaces'
     const props = defineProps({
         username: String,
@@ -16,6 +16,19 @@
             new_message.value = ''  // so we can blank out the input after send while message is in flight
         }  // no need to error on blank string here
     }
+
+    const chatlist = ref(null)
+
+    function scrollToLatest() {
+        chatlist.value.scrollTop = chatlist.value.scrollHeight
+    }
+
+    onUpdated(() => {
+        scrollToLatest()
+    })
+    onMounted(() => {
+        scrollToLatest()
+    })
 </script>
 
 <template>
@@ -23,7 +36,7 @@
         <!-- NOTE: justify end, so chat messages start at the bottom (not the top)-->
         <div class="flex flex-col justify-end h-screen">
             <!-- overflow for a scroll bar, since the parent has a height -->
-            <div class="px-2 overflow-y-auto">
+            <div class="px-2 overflow-y-auto" ref="chatlist">
                 <ol>
                     <li v-for="message in props.messages">
                         <span>{{message.user.name}}</span>
