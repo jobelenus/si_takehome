@@ -34,17 +34,21 @@ export const useChatStore = defineStore('chat', () => {
         const raw_users: UserList = await resp.json()
         users.push(...raw_users.users.map((u: string): User => { return {'name': u} }))
 
-        const ws_listener: Observable<WSPayload> = new Observable((subscriber: Subscriber): void => {
+        const ws_listener: Observable = new Observable((subscriber: Subscriber): void => {
             const rws = new ReconnectingWebSocket(import.meta.env.VITE_CHAT_WS+'/ws');  // had to look at the rust code to find that `ws` endpoint
             rws.addEventListener('open', () => {
                 console.log('WS up')
             });
-            rws.addEventListener('message', (payload: WSPayload) => {
-                console.log('WS payload', payload)
+            rws.addEventListener('message', (payload: MessageEvent) => {
+                const data = JSON.parse(payload.data)
+                subscriber.next(data)
             });
         })
 
         ws_listener.subscribe({
+            error(err: any) {
+                console.error('Subscribe error', err)
+            },
             next(data: WSPayload) {
                 const user: User = {name: data.user}
                 if (data.kind == KIND.SIGNIN) {
@@ -63,6 +67,8 @@ export const useChatStore = defineStore('chat', () => {
                         }
                     })
                     messages.push(msg)
+                } else {
+                    console.error('Unrecognized data over the websocket', data)
                 }
             }
         })
