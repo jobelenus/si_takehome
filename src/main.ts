@@ -18,7 +18,6 @@ router.beforeEach((to, from, next) => {
     // if you don't have a username in the store you're not logged in and cannot access the chat
     const username = unref(userStore.username)
     if (to.name != 'home' && !username) {
-        console.log('redirect to login')
         next('/')
     } else {
         next()

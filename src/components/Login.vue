@@ -2,15 +2,20 @@
 import { ref } from 'vue'
 import type { Ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
-
+const userStore = useUserStore()
 const username: Ref = ref<string>('')
+
+if (userStore.stored_username) {
+    username.value = userStore.stored_username
+}
 
 function setUser(): void {
     if (username.value) {
         // send to the back end
-        // set in a store
+        userStore.set_username(username.value)
         router.push('/chat')
     } else {
         alert('Please enter a username') // TODO replace with error in the UI
