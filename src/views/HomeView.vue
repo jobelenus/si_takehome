@@ -5,7 +5,7 @@ import Login from '../components/Login.vue'
 <template>
     <section class="min-w-[24rem] max-w-[36rem]">
         <fieldset class="text-center bg-si-green">
-            <h5 class="header">Welcome To System Initiative!</h5>
+            <h5 class="header">Welcome to System Initiative!</h5>
             <Login />
         </fieldset>
     </section>
