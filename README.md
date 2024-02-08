@@ -3,6 +3,8 @@
 
 ## How to run locally
 ```
+npx tailwindcss -i ./src/assets/base.css -o ./src/assets/output.css --watch
+
 npm run dev
 ```
 
