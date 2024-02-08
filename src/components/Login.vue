@@ -12,12 +12,24 @@ if (userStore.stored_username) {
     username.value = userStore.stored_username
 }
 
-console.log('API', import.meta.env.VITE_CHAT_API)
 
-function setUser(): void {
+async function setUser(): void {
     if (username.value) {
-        userStore.set_username(username.value)
-        router.push('/chat')
+        const resp = await fetch(import.meta.env.VITE_CHAT_API+'/signin', {
+            method: 'POST',
+            body: JSON.stringify({'user': username.value}),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        if (resp.ok) {
+            const resp_content = await resp.json()
+            console.log('RESP', resp_content)
+            userStore.set_username(username.value)
+            router.push('/chat')
+        } else {
+            alert('Backend failure')  // TODO replace with UI error
+        }
     } else {
         alert('Please enter a username') // TODO replace with error in the UI
     }

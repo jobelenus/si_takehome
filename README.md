@@ -13,4 +13,5 @@ npx cypress open
 ```
 
 ### Improvements
-TBD
+
+- Find the appropriate place (e.g. hook, middleware, whatever they call it) in Vue to wrap all fetch POSTs with Accept header
