@@ -1,14 +1,28 @@
 import './assets/output.css'
 
-import { createApp } from 'vue'
+import { createApp, unref } from 'vue'
 import { createPinia } from 'pinia'
 
 import App from './App.vue'
 import router from './router'
+import { useUserStore } from '@/stores/user'
 
 const app = createApp(App)
 
 app.use(createPinia())
 app.use(router)
+
+const userStore = useUserStore()
+
+router.beforeEach((to, from, next) => {
+    // if you don't have a username in the store you're not logged in and cannot access the chat
+    const username = unref(userStore.username)
+    if (to.name != 'home' && !username) {
+        console.log('redirect to login')
+        next('/')
+    } else {
+        next()
+    }
+})
 
 app.mount('#app')

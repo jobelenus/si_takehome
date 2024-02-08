@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import type { Ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
-const username = ref('')
+const username: Ref = ref<string>('')
 
-function setUser() {
+function setUser(): void {
     if (username.value) {
         // send to the back end
         // set in a store
