@@ -14,10 +14,6 @@
     <!-- stores are better suited to that, and it allows more easy component testing -->
     <!-- even if it does sometimes make the prop list long :/ -->
     <UserList :username="userStore.username" :users="chatStore.users" />
-    <Messages
-        :username="userStore.username"
-        :messages="chatStore.messages"
-        :pending-messages="chatStore.pending_messages"
-        :send-message="chatStore.send_message" />
+    <Messages :username="userStore.username"/>
 </template>
 
