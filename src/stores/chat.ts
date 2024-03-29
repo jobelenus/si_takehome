@@ -5,6 +5,7 @@ import type { User, Message, SendMessage, PendingMessage } from '@/stores/interf
 import { Observable } from 'rxjs';
 import type { Subscriber } from 'rxjs';
 import ReconnectingWebSocket from 'reconnecting-websocket';
+import { useQueryClient, useMutation, useQuery } from '@tanstack/vue-query'
 
 
 // we need types for the websocket
@@ -34,9 +35,23 @@ interface MessageList {
 }
 
 export const useChatStore = defineStore('chat', () => {
+    const ALL_KEY = ['messages', 'all']
+
+    const queryClient = useQueryClient()
     const users: Reactive<Array<User>> = reactive([])
-    const messages: Reactive<Array<Message>> = reactive([])
     const pending_messages: Reactive<Array<PendingMessage>> = reactive([])
+
+    // NOTE: this doesnt work, with `messages.data` in the template
+    /*const messages = useQuery({ ... })*/
+    // APPARENTLY, only this way
+    const { data: messages } = useQuery({
+        queryKey: ALL_KEY,
+        //queryFn: load_messages, // started here
+        // ALSO, this works if I call load_messages() once below
+        staleTime: Infinity,
+        cacheTime: Infinity,
+        // but it all falls apart b/c the new msg isn't read reactively off the cache
+    })
 
     async function load_users() {
         const resp = await fetch(import.meta.env.VITE_CHAT_API+'/users')
@@ -47,11 +62,38 @@ export const useChatStore = defineStore('chat', () => {
     async function load_messages() {
         const resp = await fetch(import.meta.env.VITE_CHAT_API+'/messages')
         const raw_msgs: MessageList = await resp.json()
-        messages.push(...raw_msgs.messages.map((raw_msg: APIMessage): Message => {
-            const user: User = {'name': raw_msg.user}
-            return {user: user, index: raw_msg.index, message: raw_msg.message}
-        }))
+        const msgs = []
+        for (const msg of raw_msgs.messages) {
+            msgs.push(store_msg(msg))
+        }
+        queryClient.setQueryData(ALL_KEY, msgs)
+        return msgs
     }
+
+    // store each message individually, so they can be accessed via ID easily
+    function store_msg(msg) {
+        const key = ['messages', 'individual', msg.index]
+        const user: User = {'name': msg.user}
+        const m: Message = { ...msg, user: user }
+        queryClient.setQueryData(key, () => m)
+        return m
+    }
+
+    const { mutate: new_msg } = useMutation({
+        // this is the default
+        //mutationFn: (msg: WSPayload) => Promise.resolve(msg),
+        //onSuccess: (msg: WSPayload) => {
+        // can avoid a boilerplate by catching it here
+        onMutate: (msg) => {  // i tried this, didnt work at all
+            const m: Message = store_msg(msg)
+            queryClient.setQueryData(ALL_KEY, (old_data: Array<Message>) => {
+                // this must be an immutable operation
+                // this is what I was doing wrong!
+                return [ ...old_data, m]
+            })
+            // dont need to even invalidate (it wouldn't do anything without a fetcher)
+        }
+    })
 
     async function load(): Promise<void> {
         load_users()
@@ -73,23 +115,24 @@ export const useChatStore = defineStore('chat', () => {
                 console.error('Subscribe error', err)
             },
             next(data: WSPayload) {
-                const user: User = {name: data.user}
                 if (data.kind == KIND.SIGNIN) {
+                    const user: User = {name: data.user}
                     users.push(user)
                 } else if (data.kind == KIND.MSG) {
+
                     // not entirely happy with this typing check *thinking*
                     if ((!('index' in data) || data.index == undefined) || !data.message) {
                         throw new Error('Payload expected to have index and message')
                     }
                     // remove incoming message from pending messages, and add the message to the chat
                     // should happen within one render/paint so a user shouldn't see duplicate messages
-                    const msg: Message = {user: user, index: data.index, message: data.message}
                     pending_messages.forEach((value: PendingMessage, index:number, array:Reactive<Array<PendingMessage>>) => {
-                        if (value.user.name == msg.user.name && value.message == msg.message) {
+                        if (value.user.name == data.user && value.message == data.message) {
                             array.splice(index, 1)
                         }
                     })
-                    messages.push(msg)
+
+                    new_msg(data)
                 } else {
                     console.error('Unrecognized data over the websocket', data)
                 }
@@ -109,12 +152,11 @@ export const useChatStore = defineStore('chat', () => {
                 'Content-Type': 'application/json'
             }
         })
-        console.log('POST MSG')
         if (!resp.ok) {
             alert('Error sending message!')  // TODO error handling
         }
 
     }
 
-    return {users, messages, load, send_message, pending_messages }
+    return {users, load, send_message, load_messages, pending_messages, ALL_KEY, messages }
 })
