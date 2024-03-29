@@ -16,6 +16,7 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@tanstack/vue-query": "^5.28.9",
     "pinia": "^2.1.7",
     "reconnecting-websocket": "^4.4.0",
     "rxjs": "^7.8.1",
