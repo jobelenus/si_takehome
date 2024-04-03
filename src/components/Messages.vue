@@ -63,8 +63,7 @@
                     <!-- <li v-for="msg in messages.data" :key="msg.index" @click="logMessage(msg)"> -->
                     <!-- The ONLY way this works is with destructuring -->
                     <li v-for="msg in chatStore.messages" :key="msg.index" @click="logMessage(msg.index)">
-                        <span>{{ msg.user.name }}</span>
-                        {{ msg.message }}
+                        {{ msg }}
                     </li>
                     <!-- always put pending msgs "last"-->
                     <li class="pending italic" v-for="message in chatStore.pending_messages" :key="message.index">

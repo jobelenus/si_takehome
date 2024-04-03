@@ -1,11 +1,11 @@
 import { defineStore } from 'pinia'
-import { reactive } from 'vue'
+import { reactive, computed } from 'vue'
 import type { Reactive } from 'vue'
 import type { User, Message, SendMessage, PendingMessage } from '@/stores/interfaces'
 import { Observable } from 'rxjs';
 import type { Subscriber } from 'rxjs';
 import ReconnectingWebSocket from 'reconnecting-websocket';
-import { useQueryClient, useMutation, useQuery } from '@tanstack/vue-query'
+import { useQueryClient, useMutation, useQuery, useQueries } from '@tanstack/vue-query'
 
 
 // we need types for the websocket
@@ -37,6 +37,33 @@ interface MessageList {
 export const useChatStore = defineStore('chat', () => {
     const ALL_KEY = ['messages', 'all']
 
+    // this reactivity works perfectly.. but `useQueries` is not as lenient as omitting `queryFn`
+    const _message_ids = reactive(new Set())
+    const _message_queries = computed(() => {
+        const all = Array.from(_message_ids).map((idx) => {
+            return {
+                queryKey: ['message', 'individual', idx],
+                // doesn't seem I can omit this here?!
+                // but it shouldn't get called!!
+                queryFn: load_message,
+                // and it does get called, so it has to exist or this all breaks
+                // and this means its going to double fetch instead of use values from the WS
+                staleTime: Infinity,
+                cacheTime: Infinity,
+            }
+        })
+        return all
+    })
+    const _messages = useQueries({ queries: _message_queries })
+    const messages = computed(() => {
+        const m = [];
+        for (const _m of _messages.value) {
+            console.log(_m)
+            m.push(_m.data)
+        }
+        return m
+    })
+
     const queryClient = useQueryClient()
     const users: Reactive<Array<User>> = reactive([])
     const pending_messages: Reactive<Array<PendingMessage>> = reactive([])
@@ -44,14 +71,22 @@ export const useChatStore = defineStore('chat', () => {
     // NOTE: this doesnt work, with `messages.data` in the template
     /*const messages = useQuery({ ... })*/
     // APPARENTLY, only this way
-    const { data: messages } = useQuery({
+    /*const { data: messages } = useQuery({
         queryKey: ALL_KEY,
         //queryFn: load_messages, // started here
         // ALSO, this works if I call load_messages() once below
         staleTime: Infinity,
         cacheTime: Infinity,
         // but it all falls apart b/c the new msg isn't read reactively off the cache
-    })
+    })*/
+    
+    async function load_message(key) {
+        //this is a dummy route and should never really be called
+        console.log("LOAD MSG, NO", key)
+        const id = key[-1]
+        const resp = await fetch(import.meta.env.VITE_CHAT_API+'/message/'+id)
+        return await resp.json()
+    }
 
     async function load_users() {
         const resp = await fetch(import.meta.env.VITE_CHAT_API+'/users')
@@ -66,8 +101,8 @@ export const useChatStore = defineStore('chat', () => {
         for (const msg of raw_msgs.messages) {
             msgs.push(store_msg(msg))
         }
-        queryClient.setQueryData(ALL_KEY, msgs)
-        return msgs
+        //queryClient.setQueryData(ALL_KEY, msgs)
+        //return msgs
     }
 
     // store each message individually, so they can be accessed via ID easily
@@ -76,6 +111,8 @@ export const useChatStore = defineStore('chat', () => {
         const user: User = {'name': msg.user}
         const m: Message = { ...msg, user: user }
         queryClient.setQueryData(key, () => m)
+        // this creates a ton of re-renders, can be done differently EZ
+        _message_ids.add(m.index)
         return m
     }
 
@@ -86,11 +123,11 @@ export const useChatStore = defineStore('chat', () => {
         // can avoid a boilerplate by catching it here
         onMutate: (msg) => {  // i tried this, didnt work at all
             const m: Message = store_msg(msg)
-            queryClient.setQueryData(ALL_KEY, (old_data: Array<Message>) => {
+            /*queryClient.setQueryData(ALL_KEY, (old_data: Array<Message>) => {
                 // this must be an immutable operation
                 // this is what I was doing wrong!
                 return [ ...old_data, m]
-            })
+            })*/
             // dont need to even invalidate (it wouldn't do anything without a fetcher)
         }
     })
@@ -158,5 +195,5 @@ export const useChatStore = defineStore('chat', () => {
 
     }
 
-    return {users, load, send_message, load_messages, pending_messages, ALL_KEY, messages }
+    return {users, load, send_message, load_messages, pending_messages, messages }
 })
