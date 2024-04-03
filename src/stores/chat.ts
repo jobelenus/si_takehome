@@ -64,18 +64,15 @@ export const useChatStore = defineStore('chat', () => {
         const raw_msgs: MessageList = await resp.json()
         const msgs = []
         for (const msg of raw_msgs.messages) {
-            msgs.push(store_msg(msg))
+            msgs.push(fmt_message(msg))
         }
         queryClient.setQueryData(ALL_KEY, msgs)
         return msgs
     }
 
-    // store each message individually, so they can be accessed via ID easily
-    function store_msg(msg) {
-        const key = ['messages', 'individual', msg.index]
+    function fmt_message(msg) {
         const user: User = {'name': msg.user}
         const m: Message = { ...msg, user: user }
-        queryClient.setQueryData(key, () => m)
         return m
     }
 
@@ -85,7 +82,7 @@ export const useChatStore = defineStore('chat', () => {
         //onSuccess: (msg: WSPayload) => {
         // can avoid a boilerplate by catching it here
         onMutate: (msg) => {  // i tried this, didnt work at all
-            const m: Message = store_msg(msg)
+            const m = fmt_message(msg)
             queryClient.setQueryData(ALL_KEY, (old_data: Array<Message>) => {
                 // this must be an immutable operation
                 // this is what I was doing wrong!

@@ -11,14 +11,28 @@
     const selected_index = ref()
 
     // this works to pull from cache
-    const { data: selected_msg } = useQuery({
-        queryKey: ['messages', 'individual', selected_index],  // docs say put the ref (not .value)
+    /*const { data: selected_msg } = useQuery({
+        queryKey: chatStore.ALL_KEY,  // docs say put the ref (not .value)
         //queryFn: () => { return {} },  // without a return we get `Query data cannot be undefined.`
         //queryFn: () => {},  // but if i return something, i dont read from cache
         // BUT we can entirely omit the queryFn and get no errors with a cache read
         staleTime: Infinity,
         cacheTime: Infinity,
+        // this is not reactive?!
+        select: (data: [Message]) => {
+            console.log("IN SELECT", selected_index.value)
+            return data.find(msg => msg.index == selected_index.value)
+        }
+    })*/
+    // we can't go "back to the source" with a useQuery, b/c selected doesnt react
+    // so we have to use `find` on the whole reactive list
+    const selected_msg = computed(() => {
+        if (!selected_index.value) return null
+        return chatStore.messages.find((m: Message) => m.index === selected_index.value)
     })
+    // but it at least works... and we could wrapper that up so its clean, but still annoying
+    // and we have to handle null cases instead of letting it "flow" naturally (e.g. hitting empty access)
+    // this avoids double storage
 
     // be sure to separate the reactive state of typed messages from what is sent across the wire
     const new_message: Ref = ref<string>('')
